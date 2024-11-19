@@ -30,6 +30,16 @@ int oprationVal(char op, int a, int b, int* errCode){
     }
 }
 
+void removeSpaces(char exp[]){
+    int k = 0, i = 0;
+    while(exp[i] != '\0' && exp[i] != '\n'){
+        if(exp[i] != ' ')
+            exp[k++] = exp[i];
+        i++;
+    }
+    exp[k] = '\0';
+}
+
 // calculator main function
 int calculate(char exp[], int* errCode){
     int values[MAX];
@@ -39,23 +49,26 @@ int calculate(char exp[], int* errCode){
     
     int i = 0;
     while(exp[i] != '\0'){
-        if(exp[i] == ' ' || exp[i] == '\n'){  // for space
-            i++;
-        } else if('0' <= exp[i] && exp[i] <= '9'){  // for number
-            int num = exp[i++] - '0';
+        if('0' <= exp[i] && exp[i] <= '9'){  // for number
+            int val = exp[i++] - '0';
             
             while('0' <= exp[i] && exp[i] <= '9')
-                num = num * 10 + (exp[i++] - '0');
+                val = val * 10 + (exp[i++] - '0');
 
-            values[++top1] = num;
+            values[++top1] = val;
         } else if(isOp(exp[i])){    // for operator
-            if(exp[i + 1] == '\0' || exp[i + 1] == '\n' || isOp(exp[i + 1] || (isOp(exp[i - 1]) && exp[i - 1] != '-'))){   // if 2 operators come 1 by 1 then we will send errCode 2
+            if(exp[i + 1] == '\0' || exp[i + 1] == '\n' || isOp(exp[i + 1])){   // if 2 operators come 1 by 1 then we will send errCode 2
                 *errCode = 2;
                 return 0;
             }
-            if(i - 1 < 0 && exp[i] == '-' && exp[i + 1] >= '0' && exp[i + 1] <= '9'){
-                values[++top1] = -(exp[i + 1] - '0');
-                i += 2;
+            if(i == 0 && exp[i] == '-' && exp[i + 1] >= '0' && exp[i + 1] <= '9'){  // if the first value is a minus value
+                i++;
+                int val = exp[i++] - '0';
+
+                while('0' <= exp[i] && exp[i] <= '9')
+                    val = val * 10 + (exp[i++] - '0');
+                
+                values[++top1] = -val;
                 continue;
             }
 
@@ -85,6 +98,7 @@ int calculate(char exp[], int* errCode){
     return values[top1];
 }
 
+
 int main(){
     char exp[MAX];
     char * ptr = exp;
@@ -100,6 +114,7 @@ int main(){
         return 0;
     }
 
+    removeSpaces(exp);
     int ans = calculate(exp, &errCode);
 
     if(errCode == 1)
@@ -111,3 +126,18 @@ int main(){
 
     return 0;
 }
+
+/* 
+Testcases which I used are ->
+
+1. 10 - 15                          = -5
+2. 12345 + 67890 - 54321            = 25914
+3.    7    +  3    *    2           = 13
+4. 5 + x - 2                        = Error: Invalid expression.
+5. 10 / 0 + 5                       = Error: Division by zero.
+6. 25 / 5 + 5 * 2 * 2 - 4 / 2 - 10  = 13
+7. 10 + 2 * 3                       = 16
+8. 5 ++ 6 * 2                       = Error: Invalid expression
+9. - 10 + 5                         = -5
+10. -20 + 5 * 10 / 5                = -10
+*/
