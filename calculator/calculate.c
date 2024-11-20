@@ -57,7 +57,7 @@ int calculate(char exp[], int* errCode){
 
             values[++top1] = val;
         } else if(isOp(exp[i])){    // for operator
-            if(exp[i + 1] == '\0' || exp[i + 1] == '\n' || isOp(exp[i + 1])){   // if 2 operators come 1 by 1 then we will send errCode 2
+            if(exp[i + 1] == '\0' || exp[i + 1] == '\n' || isOp(exp[i + 1]) || (i == 0 && isOp(exp[i]) && exp[i] != '-')){   // if 2 operators come 1 by 1 then we will send errCode 2
                 *errCode = 2;
                 return 0;
             }
