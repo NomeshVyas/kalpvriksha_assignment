@@ -13,7 +13,7 @@ User u;
 
 // Utility Functions
 int isAlreadyExist(char id[]){
-    FILE * fp = fopen("sample.txt", "rb");
+    FILE * fp = fopen("users.txt", "rb");
     if(!fp){
         return 0;
     }
@@ -32,23 +32,26 @@ int isAlreadyExist(char id[]){
 void createNewUser(){
     printf("\nEnter User ID : ");
     scanf("%s", &u.id);
+    fflush(stdin);
     while(isAlreadyExist(u.id)){
         printf("\nGiven ID is already exist, user another one : ");
         scanf("%s", &u.id);
+        fflush(stdin);
     }
 
-    FILE * fp = fopen("sample.txt", "ab+");
+    FILE * fp = fopen("users.txt", "ab+");
     if(!fp){
         printf("Error : The file not found...");
         return;
     }
 
     printf("Enter User's Name : ");
-    scanf("%s", &u.name);
+    scanf("%[^\n]%*c", &u.name);
+    fflush(stdin);
     printf("Enter user's Age : ");
     scanf("%s", &u.age);
+    fflush(stdin);
 
-    // fprintf(fp, "%s\t\t%s\t\t%s\n", u.id, u.name, u.age);
     fwrite(&u, sizeof(u), 1, fp);
     printf("\n%s as user added successfully.\n", u.name);
 
@@ -56,23 +59,23 @@ void createNewUser(){
 }
 
 void displayAllUsers(){
-    FILE * fp = fopen("sample.txt", "rb");
+    FILE * fp = fopen("users.txt", "rb");
     if(!fp){
         printf("Error : The file not found...");
         return;
     }
 
     printf("\n----User Details Dashboard----\n");
-    printf("UserID\t\tUserNmae\tAge\n");
+    printf("UserID\t\t\tUserName\t\t\tAge\n");
 
     while(fread(&u, sizeof(u), 1, fp) == 1)
-        printf("%s\t\t%s\t\t%s\n", u.id, u.name, u.age);
+        printf("%s\t\t\t%s\t\t\t%s\n", u.id, u.name, u.age);
 
     fclose(fp);
 }
 
 void searchUser(){
-    FILE * fp = fopen("sample.txt", "rb");
+    FILE * fp = fopen("users.txt", "rb");
     if(!fp){
         printf("Error : The file not found...");
         return;
@@ -82,6 +85,7 @@ void searchUser(){
     char id[MAX];
     printf("\nEnter the User ID which you want to search : ");
     scanf("%s", id);
+    fflush(stdin);
 
     while(fread(&u, sizeof(u), 1, fp) > 0 && found == 0){
         if(!strcmp(id, u.id)){
@@ -95,7 +99,7 @@ void searchUser(){
 }
 
 void deleteUser(){
-    FILE * fp = fopen("sample.txt", "rb");
+    FILE * fp = fopen("users.txt", "rb");
     if(!fp){
         printf("Error : The file not found...");
         return;
@@ -104,6 +108,7 @@ void deleteUser(){
     char delId[MAX];
     printf("Enter UserID which data you want to delete : ");
     scanf("%s", delId);
+    fflush(stdin);
 
     int found = 0;
     FILE* tempFp = fopen("tempUser.txt", "wb");
@@ -117,10 +122,10 @@ void deleteUser(){
     fclose(fp);
     fclose(tempFp);
 
-    remove("sample.txt");
+    remove("users.txt");
     if(found == 0) printf("\nNo such record found...\n");
     else printf("\nUser Deleted Successfully...\n");
-    rename("tempUser.txt", "sample.txt");
+    rename("tempUser.txt", "users.txt");
 }
 
 void updateUser(){
@@ -128,34 +133,46 @@ void updateUser(){
     int found = 0;
     printf("\nEnter UserID which data u want to edit : ");
     scanf("%s", userId);
+    fflush(stdin);
 
-    FILE* fp =fopen("sample.txt", "rb+");
+    FILE* fp =fopen("users.txt", "rb+");
     if(!fp){
         printf("Error : The file not found...");
         return;
     }
 
-    while(fread(&u, sizeof(u), 1, fp) == 1 && found == 0){
+    FILE* tempFp = fopen("temp.txt", "wb+");
+    if(!tempFp){
+        printf("Error : The file not found...");
+        return;
+    }
+
+    while(fread(&u, sizeof(u), 1, fp) == 1){
         if(strcmp(userId, u.id) == 0){
             found = 1;
             printf("Previously Stored record ->\n");
             printf("UserID : %s, Name : %s, Age : %s\n", u.id, u.name, u.age);
 
             printf("Now enter the new details -> \n");
-            fflush(stdin);
 
             printf("\nEnter Correct Name : ");
-            scanf("%s", &u.name);
+            scanf("%[^\n]%*c", &u.name);
+            fflush(stdin);
             printf("\nEnter Correct Age : ");
             scanf("%s", &u.age);
-            fseek(fp, -(long)sizeof(u), 1);
-            fwrite(&u, sizeof(u), 1, fp);
+            fflush(stdin);
+            fwrite(&u, sizeof(u), 1, tempFp);
             printf("\nRecord Updated Successfully...");
+        } else {
+            fwrite(&u, sizeof(u), 1, tempFp);
         }
     }
 
-    if(found == 0) printf("\nRecord Not Found...\n");
     fclose(fp);
+    fclose(tempFp);
+    remove("users.txt");
+    if(found == 0) printf("\nRecord Not Found...\n");
+    rename("temp.txt", "users.txt");
 }
 
 // Main Function
@@ -175,6 +192,7 @@ int main(){
         int op;
         printf("Select required operation as number 1 to 5 : ");
         scanf("%d", &op);
+        fflush(stdin);
 
         switch (op){
         case 1:
@@ -200,10 +218,16 @@ int main(){
             break;
         }
 
-        printf("\nPress 1 for Main menu or 0 for exit : ");
+        printf("\nPress any key for Main menu or 0 for exit : ");
         scanf("%d", &on);
+        fflush(stdin);
         if(!on) return 0;
     }
 
     return 0;
 }
+
+// Key Note :- 
+// 1. For input string with space use scanf("%[^\n]%*c"), scanf("%s") with skip string after space
+// 2. fflush for clear input buffer for prevent unwanted stored input
+// 3. we are using binary format for maintain user database in users.txt for structured format using User structure
