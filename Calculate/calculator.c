@@ -5,12 +5,17 @@
 
 // utility functions
 int precendence(char op){
-    if(op == '+' || op == '-') return 0;
-    if(op == '*' || op == '/') return 1;
+    if(op == '+' || op == '-') return 1;
+    if(op == '*' || op == '/') return 2;
+    return 0;
 }
 
-int isOp(char op){
+int isOperator(char op){
     return op == '+' || op == '-' || op == '*' || op == '/';
+}
+
+int isNum(char n){
+    return '0' <= n && '9' >= n;
 }
 
 int oprationVal(char op, int a, int b, int* errCode){
@@ -30,56 +35,88 @@ int oprationVal(char op, int a, int b, int* errCode){
     }
 }
 
-void removeSpaces(char exp[]){
-    int k = 0, i = 0;
-    while(exp[i] != '\0' && exp[i] != '\n'){
-        if(exp[i] != ' ')
-            exp[k++] = exp[i];
-        i++;
+void removeSpaces(char* exp){
+    char* ptr = exp;
+    while(*exp != '\0' && *exp != '\n'){
+        if(*exp != ' '){
+            *ptr = *exp;
+            ptr++;
+        }
+        exp++;
     }
-    exp[k] = '\0';
+    *ptr = '\0';
+}
+
+// calculator's helping functions
+char* handleNum(char* exp, int values[], int* top1){
+    int val = 0;
+    
+    while(isNum(*exp)){
+        val = val * 10 + (*exp - '0');
+        exp++;
+    }
+
+    values[++*top1] = val;
+    return exp;
+}
+
+char* handleOperator(char* exp, char operations[], int values[], int* top1, int* top2, int* errCode){
+    if(*(exp + 1) == '\0' || *(exp + 1) == '\n' || isOperator(*(exp + 1))){   // if 2 operators come 1 by 1 then we will send errCode 2
+        *errCode = 2;
+        return exp;
+    }
+
+    while(*top2 >= 0 && precendence(operations[*top2]) >= precendence(*exp)){
+        char op = operations[(*top2)--];
+        int b = values[(*top1)--];
+        int a = values[*top1];
+        int val = oprationVal(op, a, b, errCode);
+        if(*errCode) return exp;
+        values[*top1] = val;
+    }
+
+    operations[++(*top2)] = *exp;
+    exp++;
+    return exp;
+}
+
+char* handleStartMinus(char* exp, int values[], int* top1, int* errCode){
+    if(isOperator(*exp)){
+        if(*exp == '-' && isNum(*(exp + 1))){           // if the first value is a minus value
+            int val = 0;
+            exp++;
+
+            while(isNum(*exp)){
+                val = val * 10 + (*exp - '0');
+                exp++;
+            }
+
+            values[++*top1] = -val;
+        } else {            // other operators will make our expression invalid
+            *errCode = 2;
+        }
+    }
+    return exp;
 }
 
 // calculator main function
-int calculate(char exp[], int* errCode){
+int calculate(char* exp, int* errCode){
     int values[MAX];
     char operations[MAX];
-    // here top1 is for values, and top2 is for operations
-    int top1 = -1, top2 = -1;
-    
-    int i = 0;
-    while(exp[i] != '\0'){
-        if('0' <= exp[i] && exp[i] <= '9'){  // for number
-            int val = exp[i++] - '0';
-            
-            while('0' <= exp[i] && exp[i] <= '9')
-                val = val * 10 + (exp[i++] - '0');
+    int top1 = -1, top2 = -1;       // here top1 is for values, and top2 is for operations
 
-            values[++top1] = val;
-        } else if(isOp(exp[i])){    // for operator
-            if(exp[i + 1] == '\0' || exp[i + 1] == '\n' || isOp(exp[i + 1]) || (i == 0 && isOp(exp[i]) && exp[i] != '-')){   // if 2 operators come 1 by 1 then we will send errCode 2
-                *errCode = 2;
-                return 0;
-            }
-            if(i == 0 && exp[i] == '-' && exp[i + 1] >= '0' && exp[i + 1] <= '9'){  // if the first value is a minus value
-                i++;
-                int val = exp[i++] - '0';
+    exp = handleStartMinus(exp, values, &top1, errCode);
+    if(*exp == '\0' || *exp == '\n' || *errCode){       // in case of blank expression
+        *errCode = 2;
+        return 0;
+    }
 
-                while('0' <= exp[i] && exp[i] <= '9')
-                    val = val * 10 + (exp[i++] - '0');
-                
-                values[++top1] = -val;
-                continue;
-            }
-
-            while(top2 >= 0 && precendence(operations[top2]) >= precendence(exp[i])){
-                char op = operations[top2--];
-                int b = values[top1--];
-                int a = values[top1];
-                int val = oprationVal(op, a, b, errCode);
-                values[top1] = val;
-            }
-            operations[++top2] = exp[i++];
+    while(*exp != '\0'){
+        if(isNum(*exp)){        // for number
+            exp = handleNum(exp, values, &top1);
+        } else if(isOperator(*exp)){    // for operator
+            exp = handleOperator(exp, operations, values, &top1, &top2, errCode);
+            if(*errCode) return 0;
         } else {
             *errCode = 2;
             return 0;
@@ -98,32 +135,32 @@ int calculate(char exp[], int* errCode){
     return values[top1];
 }
 
-
-int main(){
-    char exp[MAX];
-    char * ptr = exp;
-    int errCode = 0;    // here we will use errCode 1 for divided by 0, and errCode 2 for invalid expression
-
-    // taking the exp as input
+void expressionPromt(char * exp){
     printf("Your Expression Calculator is here now...\n");
     printf("Enter a valid expression for compute : \n");
-    fgets(exp, MAX, stdin);
-    
-    if(exp[0] == '\0' || exp[0] == '\n'){   // in case of user didn't gave any input
-        printf("Error: Invalid expression.");
-        return 0;
-    }
+    fgets(exp, MAX, stdin);         // taking the exp as input
+}
 
-    removeSpaces(exp);
-    int ans = calculate(exp, &errCode);
-
+void printResult(int ans, int errCode){
     if(errCode == 1)
         printf("Error: Division by zero.");
     else if(errCode == 2)
         printf("Error: Invalid expression.");
     else
-        printf("%d", ans);
+        printf("%d", ans);    
+}
 
+int main(){
+    char exp[MAX];
+
+    while(1)
+    {
+    int errCode = 0, ans = 0;    // here we will use errCode 1 for divided by 0, and errCode 2 for invalid expression
+    expressionPromt(exp);
+    removeSpaces(exp);
+    ans = calculate(exp, &errCode);
+    printResult(ans, errCode);
+    }
     return 0;
 }
 
