@@ -153,14 +153,11 @@ void printResult(int ans, int errCode){
 int main(){
     char exp[MAX];
 
-    while(1)
-    {
     int errCode = 0, ans = 0;    // here we will use errCode 1 for divided by 0, and errCode 2 for invalid expression
     expressionPromt(exp);
     removeSpaces(exp);
     ans = calculate(exp, &errCode);
     printResult(ans, errCode);
-    }
     return 0;
 }
 
