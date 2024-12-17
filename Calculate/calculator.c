@@ -3,6 +3,10 @@
 
 #define MAX 200
 
+int values[MAX];
+char operations[MAX];
+int topValue = -1, topOperation = -1;       // here topValue is for values, and topOperation is for operations
+
 // utility functions
 int precendence(char op){
     if(op == '+' || op == '-') return 1;
@@ -48,7 +52,7 @@ void removeSpaces(char* exp){
 }
 
 // calculator's helping functions
-char* handleNum(char* exp, int values[], int* top1){
+char* handleNum(char* exp){
     int val = 0;
     
     while(isNum(*exp)){
@@ -56,31 +60,31 @@ char* handleNum(char* exp, int values[], int* top1){
         exp++;
     }
 
-    values[++*top1] = val;
+    values[++topValue] = val;
     return exp;
 }
 
-char* handleOperator(char* exp, char operations[], int values[], int* top1, int* top2, int* errCode){
+char* handleOperator(char* exp, int* errCode){
     if(*(exp + 1) == '\0' || *(exp + 1) == '\n' || isOperator(*(exp + 1))){   // if 2 operators come 1 by 1 then we will send errCode 2
         *errCode = 2;
         return exp;
     }
 
-    while(*top2 >= 0 && precendence(operations[*top2]) >= precendence(*exp)){
-        char op = operations[(*top2)--];
-        int b = values[(*top1)--];
-        int a = values[*top1];
+    while(topOperation >= 0 && precendence(operations[topOperation]) >= precendence(*exp)){
+        char op = operations[topOperation--];
+        int b = values[topValue--];
+        int a = values[topValue];
         int val = oprationVal(op, a, b, errCode);
         if(*errCode) return exp;
-        values[*top1] = val;
+        values[topValue] = val;
     }
 
-    operations[++(*top2)] = *exp;
+    operations[++topOperation] = *exp;
     exp++;
     return exp;
 }
 
-char* handleStartMinus(char* exp, int values[], int* top1, int* errCode){
+char* handleStartMinus(char* exp, int* errCode){
     if(isOperator(*exp)){
         if(*exp == '-' && isNum(*(exp + 1))){           // if the first value is a minus value
             int val = 0;
@@ -91,7 +95,7 @@ char* handleStartMinus(char* exp, int values[], int* top1, int* errCode){
                 exp++;
             }
 
-            values[++*top1] = -val;
+            values[++topValue] = -val;
         } else {            // other operators will make our expression invalid
             *errCode = 2;
         }
@@ -101,11 +105,8 @@ char* handleStartMinus(char* exp, int values[], int* top1, int* errCode){
 
 // calculator main function
 int calculate(char* exp, int* errCode){
-    int values[MAX];
-    char operations[MAX];
-    int top1 = -1, top2 = -1;       // here top1 is for values, and top2 is for operations
-
-    exp = handleStartMinus(exp, values, &top1, errCode);
+    removeSpaces(exp);
+    exp = handleStartMinus(exp, errCode);
     if(*exp == '\0' || *exp == '\n' || *errCode){       // in case of blank expression
         *errCode = 2;
         return 0;
@@ -113,9 +114,9 @@ int calculate(char* exp, int* errCode){
 
     while(*exp != '\0'){
         if(isNum(*exp)){        // for number
-            exp = handleNum(exp, values, &top1);
+            exp = handleNum(exp);
         } else if(isOperator(*exp)){    // for operator
-            exp = handleOperator(exp, operations, values, &top1, &top2, errCode);
+            exp = handleOperator(exp, errCode);
             if(*errCode) return 0;
         } else {
             *errCode = 2;
@@ -123,16 +124,17 @@ int calculate(char* exp, int* errCode){
         }
     }
 
-    while(top2 >= 0){
-        char op = operations[top2--];
-        int b = values[top1--];
-        int a = values[top1];
+    while(topOperation >= 0){
+        char op = operations[topOperation--];
+        int b = values[topValue--];
+        int a = values[topValue];
 
         int val = oprationVal(op, a, b, errCode);
-        values[top1] = val;
+        if(*errCode) return 0;
+        values[topValue] = val;
     }
 
-    return values[top1];
+    return values[topValue];
 }
 
 void expressionPromt(char * exp){
@@ -152,10 +154,9 @@ void printResult(int ans, int errCode){
 
 int main(){
     char exp[MAX];
-
     int errCode = 0, ans = 0;    // here we will use errCode 1 for divided by 0, and errCode 2 for invalid expression
+
     expressionPromt(exp);
-    removeSpaces(exp);
     ans = calculate(exp, &errCode);
     printResult(ans, errCode);
     return 0;
