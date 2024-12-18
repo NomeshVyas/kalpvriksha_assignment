@@ -1,5 +1,4 @@
 #include<stdio.h>
-#include<string.h>
 
 #define MAX 100
 
@@ -12,6 +11,19 @@ typedef struct {
 User u;
 
 // Utility Functions
+int stringCompare(char *str1, char *str2){
+    while(*str1 != '\0' && *str2 != '\0'){
+        if(*str1 != *str2) return 1;
+        str1++;
+        str2++;
+    }
+
+    if(*str1 != '\0' || *str2 != '\0')
+        return 1;
+
+    return 0;
+}
+
 int isAlreadyExist(char *id){
     FILE * filePointer = fopen("users.txt", "rb");
     if(!filePointer){
@@ -19,7 +31,7 @@ int isAlreadyExist(char *id){
     }
     User temp;
     while(fread(&temp, sizeof(temp), 1, filePointer) > 0)
-        if(strcmp(id, temp.id) == 0){
+        if(stringCompare(id, temp.id) == 0){
             fclose(filePointer);
             return 1;
         }
@@ -69,6 +81,9 @@ void displayAllUsers(){
     while(fread(&u, sizeof(u), 1, filePointer) == 1)
         printf("%s\t\t\t%s\t\t\t%s\n", u.id, u.name, u.age);
 
+    printf("\n\nPress any key to go on main menu : ");
+    char next;
+    scanf("%c", &next);
     fclose(filePointer);
 }
 
@@ -85,7 +100,7 @@ void searchUser(){
     scanf("%s", id);
 
     while(fread(&u, sizeof(u), 1, filePointer) > 0 && found == 0){
-        if(!strcmp(id, u.id)){
+        if(!stringCompare(id, u.id)){
             found = 1;
             printf("User found successfully ->\n");
             printf("UserID : %s, Name : %s, Age : %s\n", u.id, u.name, u.age);
@@ -111,7 +126,7 @@ void deleteUser(){
     int found = 0;
     FILE* tempfilePointer = fopen("tempUser.txt", "wb");
     while(fread(&u, sizeof(u), 1, filePointer) == 1){
-        if(strcmp(delId, u.id) != 0)
+        if(stringCompare(delId, u.id) != 0)
             fwrite(&u, sizeof(u), 1, tempfilePointer);
         else
             found = 1;
@@ -145,7 +160,7 @@ void updateUser(){
     }
 
     while(fread(&u, sizeof(u), 1, filePointer) == 1){
-        if(strcmp(userId, u.id) == 0){
+        if(stringCompare(userId, u.id) == 0){
             found = 1;
             printf("Previously Stored record ->\n");
             printf("UserID : %s, Name : %s, Age : %s\n", u.id, u.name, u.age);
