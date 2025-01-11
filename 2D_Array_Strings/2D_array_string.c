@@ -42,7 +42,7 @@ void handleInput(char ***matrix, int rowSize, int columnSize){
     for(int row = 0; row < rowSize; row++)
         for(int column = 0; column < columnSize; column++){
             printf("Name at (%d,%d) : ", row, column);
-            scanf("%20[^\n]s", *(*(matrix + row) + column));
+            scanf("%50[^\n]s", *(*(matrix + row) + column));
             getchar();
         }
 }
