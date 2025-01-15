@@ -19,21 +19,21 @@ char *handleInput(){
 }
 
 void removeAdjacentDuplicates(char *string){
-    int len = stringLength(string);
-    char *stack = (char *) malloc(len * sizeof(char));
-    int top = -1;
-    char *stringPtr = string;
-    while(*stringPtr){
-        *(stack + ++top) = *stringPtr;
-        while(top > 0 && *(stack + top) == *(stack + top - 1)) top -= 2;
-        stringPtr++;
+    int checkAgain = 0;
+    char *left = string;
+    char *right = string;
+    while(*right != '\0'){
+        if(*(right + 1) != '\0' && *right == *(right + 1)){
+            checkAgain = 1;
+            right += 2;
+            continue;
+        }
+        *left = *right;
+        right++;
+        left++;
     }
-    *(string + top + 1) = '\0';
-    while(top >= 0){
-        *(string + top) = *(stack + top);
-        top--;
-    }
-    free(stack);
+    *left = '\0';
+    if(checkAgain) removeDuplicates(string);
 }
 
 void handleOutput(char *string){
