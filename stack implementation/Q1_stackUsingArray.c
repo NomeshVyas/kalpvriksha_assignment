@@ -125,3 +125,14 @@ int main(){
     menu();
     return 0;
 }
+
+/*
+Complexity Analysis ->
+No. Operation               Time Complexity                 Space Complexity
+1.  push                    O(1)                            O(1)
+2.  pop                     O(1)                            O(1)
+3.  peek                    O(1)                            O(1)
+4.  size                    O(1)                            O(1)
+5.  isEmpty                 O(1)                            O(1)
+6.  isFull                  O(1)                            O(1)
+*/
