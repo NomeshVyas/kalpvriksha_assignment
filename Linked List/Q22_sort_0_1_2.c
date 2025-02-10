@@ -14,7 +14,7 @@ Node *merge(Node *left, Node *right){
     Node *dummyHead = createNode(0);
     Node *tail = dummyHead;
     while(left && right){
-        if(left->data < right->data){
+        if(left->data <= right->data){
             tail->next = left;
             tail = left;
             left = left->next;
